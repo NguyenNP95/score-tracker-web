@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Score Tracker</title>
+  <meta name="description" content="Bảng ghi điểm các ván chơi, tự tính tổng, lưu lịch sử và xuất Excel. Dùng được offline.">
+  <meta name="theme-color" content="#f3f4f7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0c0e12" media="(prefers-color-scheme: dark)">
+  <meta name="color-scheme" content="light dark">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Score Tracker">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" href="icons/favicon.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="css/style.css">
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+  <!-- Bộ icon (Material Icons), dùng qua <use href="#i-..."> -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-history" viewBox="0 0 24 24"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></symbol>
+    <symbol id="i-restart" viewBox="0 0 24 24"><path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></symbol>
+    <symbol id="i-delete" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></symbol>
+    <symbol id="i-add" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></symbol>
+    <symbol id="i-remove" viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/></symbol>
+    <symbol id="i-backspace" viewBox="0 0 24 24"><path d="M22 3H7c-.69 0-1.23.35-1.59.88L0 12l5.41 8.11c.36.53.9.89 1.59.89h15c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H7.07L2.4 12l4.66-7H22v14zm-11.59-2L14 13.41 17.59 17 19 15.59 15.41 12 19 8.41 17.59 7 14 10.59 10.41 7 9 8.41 12.59 12 9 15.59z"/></symbol>
+    <symbol id="i-next" viewBox="0 0 24 24"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></symbol>
+    <symbol id="i-people" viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></symbol>
+    <symbol id="i-rows" viewBox="0 0 24 24"><path d="M3 13h18v-2H3v2zm0 6h18v-2H3v2zM3 5v2h18V5H3z"/></symbol>
+  </svg>
+
+  <!-- ============ Màn hình chơi ============ -->
+  <section id="view-game" class="view">
+    <header class="appbar">
+      <div class="brand">
+        <img src="icons/icon-192.png" alt="" width="34" height="34">
+        <h1>Bảng điểm</h1>
+      </div>
+      <div class="actions">
+        <button id="btn-history" class="icon-btn" type="button" aria-label="Lịch sử" title="Lịch sử">
+          <svg class="icon"><use href="#i-history"/></svg>
+        </button>
+        <button id="btn-export" class="icon-btn accent" type="button" aria-label="Xuất file Excel" title="Xuất file Excel">
+          <svg class="icon"><use href="#i-download"/></svg>
+        </button>
+        <button id="btn-reset" class="icon-btn danger" type="button" aria-label="Chơi lại từ đầu" title="Chơi lại từ đầu">
+          <svg class="icon"><use href="#i-restart"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="controls">
+      <div class="stepper">
+        <svg class="icon stepper-icon"><use href="#i-people"/></svg>
+        <span class="stepper-label">Người chơi</span>
+        <button id="btn-col-remove" class="step-btn" type="button" aria-label="Xóa người chơi cuối">
+          <svg class="icon"><use href="#i-remove"/></svg>
+        </button>
+        <output id="col-count" class="step-value">5</output>
+        <button id="btn-col-add" class="step-btn" type="button" aria-label="Thêm người chơi">
+          <svg class="icon"><use href="#i-add"/></svg>
+        </button>
+      </div>
+      <div class="stepper">
+        <svg class="icon stepper-icon"><use href="#i-rows"/></svg>
+        <span class="stepper-label">Hàng</span>
+        <button id="btn-row-remove" class="step-btn" type="button" aria-label="Xóa hàng cuối">
+          <svg class="icon"><use href="#i-remove"/></svg>
+        </button>
+        <output id="row-count" class="step-value">50</output>
+        <button id="btn-row-add" class="step-btn" type="button" aria-label="Thêm 10 hàng">
+          <svg class="icon"><use href="#i-add"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div id="game-table" class="table-wrap"></div>
+  </section>
+
+  <!-- ============ Lịch sử ============ -->
+  <section id="view-history" class="view" hidden>
+    <header class="appbar">
+      <button class="icon-btn" type="button" data-back="#/" aria-label="Quay lại">
+        <svg class="icon"><use href="#i-back"/></svg>
+      </button>
+      <div class="title-block"><h1>Lịch sử</h1></div>
+      <div class="actions">
+        <button id="btn-history-clear" class="icon-btn danger" type="button" aria-label="Xóa toàn bộ lịch sử" title="Xóa toàn bộ lịch sử">
+          <svg class="icon"><use href="#i-delete"/></svg>
+        </button>
+      </div>
+    </header>
+    <div class="scroll">
+      <div id="history-list" class="h-list"></div>
+      <div id="history-empty" class="empty" hidden>
+        <div class="empty-icon"><svg class="icon"><use href="#i-history"/></svg></div>
+        <p class="empty-title">Chưa có lịch sử</p>
+        <p class="empty-text">Mỗi lần bấm “Chơi lại từ đầu”, bảng đang chơi sẽ được lưu vào đây.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Xem lại một lần chơi ============ -->
+  <section id="view-detail" class="view" hidden>
+    <header class="appbar">
+      <button class="icon-btn" type="button" data-back="#/history" aria-label="Quay lại">
+        <svg class="icon"><use href="#i-back"/></svg>
+      </button>
+      <div class="title-block">
+        <h1 id="detail-title"></h1>
+        <p id="detail-sub" class="subtitle"></p>
+      </div>
+      <div class="actions">
+        <button id="btn-detail-export" class="icon-btn accent" type="button" aria-label="Xuất file Excel" title="Xuất file Excel">
+          <svg class="icon"><use href="#i-download"/></svg>
+        </button>
+        <button id="btn-detail-delete" class="icon-btn danger" type="button" aria-label="Xóa khỏi lịch sử" title="Xóa khỏi lịch sử">
+          <svg class="icon"><use href="#i-delete"/></svg>
+        </button>
+      </div>
+    </header>
+    <div id="detail-table" class="table-wrap"></div>
+  </section>
+
+  <!-- ============ Bàn phím số ============ -->
+  <div id="keypad" class="keypad" aria-hidden="true">
+    <div class="kp-bar">
+      <div class="kp-target">
+        <div id="kp-player" class="kp-player"></div>
+        <div id="kp-round" class="kp-round"></div>
+      </div>
+      <div id="kp-display" class="kp-display"><span id="kp-value" class="kp-value"></span></div>
+      <button class="kp-done" type="button" data-key="done">Xong</button>
+    </div>
+    <div class="kp-keys">
+      <button class="key" type="button" data-key="1">1</button>
+      <button class="key" type="button" data-key="2">2</button>
+      <button class="key" type="button" data-key="3">3</button>
+      <button class="key fn" type="button" data-key="back" aria-label="Xóa lùi">
+        <svg class="icon"><use href="#i-backspace"/></svg>
+      </button>
+      <button class="key" type="button" data-key="4">4</button>
+      <button class="key" type="button" data-key="5">5</button>
+      <button class="key" type="button" data-key="6">6</button>
+      <button class="key fn minus" type="button" data-key="minus" aria-label="Dấu trừ">−</button>
+      <button class="key" type="button" data-key="7">7</button>
+      <button class="key" type="button" data-key="8">8</button>
+      <button class="key" type="button" data-key="9">9</button>
+      <button class="key fn clear" type="button" data-key="clear" aria-label="Xóa ô">C</button>
+      <button class="key zero" type="button" data-key="0">0</button>
+      <button class="key next" type="button" data-key="next">
+        Tiếp <svg class="icon"><use href="#i-next"/></svg>
+      </button>
+    </div>
+  </div>
+</body>
+</html>
