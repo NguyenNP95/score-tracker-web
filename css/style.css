@@ -596,7 +596,7 @@ button:disabled {
   50% { opacity: 0; }
 }
 
-.kp-display.empty .kp-value::before {
+.kp-display.is-empty .kp-value::before {
   content: "0";
   color: var(--text-3);
   font-weight: 500;

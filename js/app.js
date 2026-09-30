@@ -21,7 +21,7 @@ function update(next) {
   renderGame();
 }
 
-const gameGrid = new ScoreGrid($('#game-table'), { onCellTap: selectCell, onNameTap: renamePlayer });
+const gameGrid = new ScoreGrid($('#game-table'), { onCellTap: tapCell, onNameTap: renamePlayer });
 
 function renderGame() {
   gameGrid.bind(table);
@@ -124,6 +124,12 @@ function selectCell(row, col) {
   requestAnimationFrame(() => gameGrid.scrollToCell(row, col));
 }
 
+/** Chạm lại đúng ô đang nhập thì ẩn bàn phím. */
+function tapCell(row, col) {
+  if (sel && sel.row === row && sel.col === col) closeKeypad();
+  else selectCell(row, col);
+}
+
 function openKeypad() {
   if (keypad.classList.contains('open')) return;
   keypad.classList.add('open');
@@ -152,7 +158,7 @@ function renderKeypad() {
   kpPlayer.textContent = table.columns[sel.col];
   kpRound.textContent = `Ván ${sel.row + 1}`;
   kpValue.textContent = entry.text;
-  kpDisplay.classList.toggle('empty', entry.text === '');
+  kpDisplay.classList.toggle('is-empty', entry.text === '');
   kpDisplay.classList.toggle('fresh', entry.fresh && entry.text !== '');
   kpDisplay.classList.toggle('auto', entry.fresh && sel.col === row.auto);
 }
@@ -216,17 +222,26 @@ keypad.addEventListener('pointerdown', (e) => {
   if (!key) return;
   e.preventDefault();
   key.classList.add('pressed');
-  press(key.dataset.key);
+  // "Xong" đợi tới click: đóng ngay ở đây thì bàn phím trượt đi trước khi click tới,
+  // click rơi xuống ô bên dưới và mở lại bàn phím.
+  if (key.dataset.key !== 'done') press(key.dataset.key);
   navigator.vibrate?.(6);
 });
 const release = (e) => e.target.closest?.('[data-key]')?.classList.remove('pressed');
 keypad.addEventListener('pointerup', release);
 keypad.addEventListener('pointercancel', release);
 keypad.addEventListener('pointerout', release);
-// Bàn phím/trình đọc màn hình (Enter/Space trên nút) không đi qua pointerdown.
+// Bàn phím/trình đọc màn hình (Enter/Space trên nút) không đi qua pointerdown; nút Xong luôn chạy ở đây.
 keypad.addEventListener('click', (e) => {
   const key = e.target.closest('[data-key]');
-  if (key && e.detail === 0) press(key.dataset.key);
+  if (key && (e.detail === 0 || key.dataset.key === 'done')) press(key.dataset.key);
+});
+
+// Chạm ra ngoài bàn phím và ngoài các ô điểm thì ẩn bàn phím.
+document.addEventListener('click', (e) => {
+  if (!sel || isDialogOpen()) return;
+  if (e.target.closest('#keypad, .g-cell, dialog')) return;
+  closeKeypad();
 });
 
 // Bàn phím thật (máy tính, iPad có bàn phím).
